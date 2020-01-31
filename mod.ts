@@ -28,11 +28,13 @@ export default class JsonRpc {
 		this._interface.set(name, method);
 	}
 
-	async call(method: string, params: Params) {
+	async call(method: string, params: Params): Promise<any> {
 		let id = Math.random().toString();
 		let message = createCallMessage(method, params, id);
-		this._send(message);
-		return new Promise((resolve, reject) => this._pendingPromises.set(id, {resolve, reject}));
+		return new Promise((resolve, reject) => {
+			this._pendingPromises.set(id, {resolve, reject})
+			this._send(message);
+		});
 	}
 
 	notify(method: string, params: Params) {
