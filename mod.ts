@@ -42,7 +42,7 @@ export default class JsonRpc {
 		this._send(message);
 	}
 
-	_send(message: Message) {
+	_send(message: Message | Message[]) {
 		console.log("[jsonrpc] sending", message);
 		this._io.sendData(JSON.stringify(message));
 	}
@@ -50,7 +50,7 @@ export default class JsonRpc {
 	_onData(str: string) {
 		console.log("[jsonrpc] received", str);
 
-		let message: Message;
+		let message: Message | Message[];
 		try {
 			message = JSON.parse(str);
 		} catch (e) {
@@ -59,7 +59,14 @@ export default class JsonRpc {
 			return;
 		}
 
-		let reply = this._processMessage(message);
+		let reply: Message | Message[] | null;
+		if (message instanceof Array) {
+			reply = message.map(m => this._processMessage(m)).filter(m => m);
+			if (!reply.length) { reply = null; }
+		} else {
+			reply = this._processMessage(message);
+		}
+
 		reply && this._send(reply);
 	}
 
