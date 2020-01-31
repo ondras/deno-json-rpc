@@ -1,4 +1,4 @@
-DENO := ../../deno/deno_linux_x64
+DENO := ~/deno/deno_linux_x64
 
 all: client.js
 
