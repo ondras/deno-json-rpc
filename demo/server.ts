@@ -1,12 +1,22 @@
 import { serve, ServerRequest } from "https://deno.land/std/http/server.ts";
 import { acceptWebSocket, isWebSocketCloseEvent, WebSocket } from "https://deno.land/std/ws/mod.ts";
 import JsonRpc from "../mod.ts";
+/*
+import * as log from "https://deno.land/std/log/mod.ts";
 
+await log.setup({
+	loggers: {
+		default: {
+			level: "DEBUG"
+		}
+	}
+  })
+*/
 let connected = new Set<JsonRpc>();
 
 async function initClient(ws: WebSocket) {
 	let io = {
-		onData(s: string) { console.log(s); },
+		onData(_s: string) {},
 		sendData(s: string) { ws.send(s); }
 	};
 	let jsonrpc = new JsonRpc(io);

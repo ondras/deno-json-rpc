@@ -1,17 +1,20 @@
+import * as log from "https://deno.land/std/log/mod.ts";
+
 import { Params, Message, ErrorMessage, ResultMessage, CallMessage, ErrorObject, IO } from "./types.d.ts";
+const V = "2.0";
 
 function createErrorMessage(id: string | null, code: number, message: string, data?: any): ErrorMessage {
 	let error = {code, message } as ErrorObject;
 	if (data) { error.data = data; }
-	return {id, error, jsonrpc:"2.0"};
+	return {id, error, jsonrpc:V};
 }
 
 function createResultMessage(id: string, result: any): ResultMessage {
-	return {id, result, jsonrpc:"2.0"};
+	return {id, result, jsonrpc:V};
 }
 
 function createCallMessage(method: string, params: Params, id?: string): CallMessage {
-	let message = {method, params, jsonrpc:"2.0"} as CallMessage;
+	let message = {method, params, jsonrpc:V} as CallMessage;
 	if (id) { message.id = id; }
 	return message;
 }
@@ -43,12 +46,13 @@ export default class JsonRpc {
 	}
 
 	_send(message: Message | Message[]) {
-		console.log("[jsonrpc] sending", message);
-		this._io.sendData(JSON.stringify(message));
+		const str = JSON.stringify(message);
+		log.debug("[jsonrpc] sending", str);
+		this._io.sendData(str);
 	}
 
 	_onData(str: string) {
-		console.log("[jsonrpc] received", str);
+		log.debug("[jsonrpc] received", str);
 
 		let message: Message | Message[];
 		try {
@@ -61,8 +65,8 @@ export default class JsonRpc {
 
 		let reply: Message | Message[] | null;
 		if (message instanceof Array) {
-			reply = message.map(m => this._processMessage(m)).filter(m => m);
-			if (!reply.length) { reply = null; }
+			let mapped = message.map(m => this._processMessage(m)).filter(m => m) as Message[];
+			reply = (mapped.length ? mapped : null);
 		} else {
 			reply = this._processMessage(message);
 		}

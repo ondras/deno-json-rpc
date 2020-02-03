@@ -8,12 +8,12 @@ let crpc, srpc: JsonRpc;
 
 function setup() {
 	client = {
-		onData(s: string) { console.log(s); },
+		onData(_s: string) {},
 		sendData(s: string) { server.onData(s); }
 	}
 
 	server = {
-		onData(s: string) { console.log(s); },
+		onData(_s: string) {},
 		sendData(s: string) { client.onData(s); }
 	}
 	crpc = new JsonRpc(client);

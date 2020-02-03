@@ -6,7 +6,7 @@ let ws = new WebSocket("ws://localhost:1234");
 
 ws.addEventListener("open", () => {
 	let io = {
-		onData(s: string) { console.log(s); },
+		onData(_s: string) {},
 		sendData(s: string) { ws.send(s); }
 	}
 
