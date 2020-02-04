@@ -1,7 +1,6 @@
 import { test } from "https://deno.land/std/testing/mod.ts";
 import { assertEquals, assertThrowsAsync, assert } from "https://deno.land/std/testing/asserts.ts";
-import JsonRpc from "./mod.ts";
-import { IO } from "./types.d.ts";
+import JsonRpc, { IO } from "./mod.ts";
 
 let client, server : IO;
 let crpc, srpc: JsonRpc;

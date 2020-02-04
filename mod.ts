@@ -1,15 +1,55 @@
-import * as log from "https://deno.land/std/log/mod.ts";
+type V = "2.0";
+type Params = unknown[] | object;
 
-import { Params, Message, ErrorMessage, ResultMessage, CallMessage, ErrorObject, IO } from "./types.d.ts";
+interface ErrorObject {
+	code: number;
+	message: string;
+	data?: unknown;
+}
+
+interface CallMessage {
+	method: string;
+	params: Params;
+	id?: string;
+	jsonrpc: V;
+}
+
+interface ResultMessage {
+	result: unknown;
+	id: string;
+	jsonrpc: V;
+}
+
+interface ErrorMessage {
+	error: ErrorObject;
+	id: string | null;
+	jsonrpc: V;
+}
+
+type Message = CallMessage | ResultMessage | ErrorMessage;
+
+export interface IO {
+	onData(str: string): void;
+	sendData(m: string): void;
+}
+
 const V = "2.0";
 
-function createErrorMessage(id: string | null, code: number, message: string, data?: any): ErrorMessage {
+function debug(msg: string, ...args: unknown[]) {
+	console.debug(`[jsonrpc] ${msg}`, ...args);
+}
+
+function warn(msg: string, ...args: unknown[]) {
+	console.warn(`[jsonrpc] ${msg}`, ...args);
+}
+
+function createErrorMessage(id: string | null, code: number, message: string, data?: unknown): ErrorMessage {
 	let error = {code, message } as ErrorObject;
 	if (data) { error.data = data; }
 	return {id, error, jsonrpc:V};
 }
 
-function createResultMessage(id: string, result: any): ResultMessage {
+function createResultMessage(id: string, result: unknown): ResultMessage {
 	return {id, result, jsonrpc:V};
 }
 
@@ -24,7 +64,7 @@ export default class JsonRpc {
 	_pendingPromises = new Map<string, {resolve:Function, reject:Function}>();
 
 	constructor(readonly _io: IO) {
-		_io.onData = m => this._onData(m);
+		_io.onData = (m:string) => this._onData(m);
 	}
 
 	expose(name: string, method: Function) {
@@ -47,12 +87,12 @@ export default class JsonRpc {
 
 	_send(message: Message | Message[]) {
 		const str = JSON.stringify(message);
-		log.debug("[jsonrpc] sending", str);
+		debug("sending", str);
 		this._io.sendData(str);
 	}
 
 	_onData(str: string) {
-		log.debug("[jsonrpc] received", str);
+		debug("received", str);
 
 		let message: Message | Message[];
 		try {
@@ -85,6 +125,7 @@ export default class JsonRpc {
 				const result = (message.params instanceof Array ? method(...message.params) : method(message.params));
 				return (message.id ? createResultMessage(message.id, result) : null);
 			} catch (e) {
+				warn("caught", e);
 				return (message.id ? createErrorMessage(message.id, -32000, e.message) : null);
 			}
 
