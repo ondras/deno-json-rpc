@@ -26,6 +26,10 @@ interface ErrorMessage {
 	jsonrpc: V;
 }
 
+interface Options {
+	log: boolean;
+}
+
 type Message = CallMessage | ResultMessage | ErrorMessage;
 
 export interface IO {
@@ -62,8 +66,12 @@ function createCallMessage(method: string, params: Params, id?: string): CallMes
 export default class JsonRpc {
 	_interface = new Map<string, Function>();
 	_pendingPromises = new Map<string, {resolve:Function, reject:Function}>();
+	_options: Options = {
+		log: false
+	}
 
-	constructor(readonly _io: IO) {
+	constructor(readonly _io: IO, options: Partial<Options> = {}) {
+		Object.assign(this._options, options);
 		_io.onData = (m:string) => this._onData(m);
 	}
 
@@ -87,12 +95,12 @@ export default class JsonRpc {
 
 	_send(message: Message | Message[]) {
 		const str = JSON.stringify(message);
-		debug("sending", str);
+		this._options.log && debug("sending", str);
 		this._io.sendData(str);
 	}
 
 	_onData(str: string) {
-		debug("received", str);
+		this._options.log && debug("received", str);
 
 		let message: Message | Message[];
 		try {
@@ -125,7 +133,7 @@ export default class JsonRpc {
 				const result = (message.params instanceof Array ? method(...message.params) : method(message.params));
 				return (message.id ? createResultMessage(message.id, result) : null);
 			} catch (e) {
-				warn("caught", e);
+				this._options.log && warn("caught", e);
 				return (message.id ? createErrorMessage(message.id, -32000, e.message) : null);
 			}
 
